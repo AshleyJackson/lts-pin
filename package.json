@@ -1,8 +1,19 @@
 {
   "name": "ltspin",
+  "author": {
+    "name": "Ashley Jackson"
+  },
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "main": "dist/index.js",
   "private": true,
+  "bin": {
+    "ltspin": "/dist/index.js"
+  },
   "devDependencies": {
     "@types/bun": "~1.1.18"
   },

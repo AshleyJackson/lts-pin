@@ -1,7 +1,10 @@
+#!/usr/bin/env node
+
 import axios from 'axios';
 import * as semver from 'semver';
 import { promises as fs } from 'fs';
 import { execSync } from 'child_process';
+import path from 'path';
 
 // Define interface for package.json structure
 interface PackageJson {
@@ -68,10 +71,10 @@ const packageManagers = [
 ];
 
 // Function to detect package manager
-async function detectPackageManager(): Promise<'bun' | 'pnpm' | 'yarn' | 'npm'> {
+async function detectPackageManager(dir: string): Promise<'bun' | 'pnpm' | 'yarn' | 'npm'> {
   for (const manager of packageManagers) {
     try {
-      await fs.access(`./${manager}`);
+      await fs.access(path.join(dir, manager));
       switch (manager) {
         case 'bun.lock':
           return 'bun';
@@ -92,10 +95,12 @@ async function detectPackageManager(): Promise<'bun' | 'pnpm' | 'yarn' | 'npm'> 
 }
 
 // Function to update package.json with previous major or minor versions
-async function updateToPreviousVersions(): Promise<void> {
+async function updateToPreviousVersions(targetDir: string = process.cwd()): Promise<void> {
   try {
-    // Read package.json from ./package.json
-    const packageJson: PackageJson = JSON.parse(await fs.readFile('./package.json', 'utf8'));
+    // Resolve package.json path
+    const packageJsonPath = path.join(targetDir, 'package.json');
+    // Read package.json
+    const packageJson: PackageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
     const dependencies: Record<string, string> = packageJson.dependencies || {};
     const devDependencies: Record<string, string> = packageJson.devDependencies || {};
     const peerDependencies: Record<string, string> = packageJson.peerDependencies || {};
@@ -124,31 +129,45 @@ async function updateToPreviousVersions(): Promise<void> {
     }
 
     // Write updated package.json
-    await fs.writeFile('./package.json', JSON.stringify(packageJson, null, 2));
-    console.log('Updated ./package.json');
+    await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    console.log(`Updated ${packageJsonPath}`);
 
     // Update dependencies and regenerate lockfile
-    const packageManager = await detectPackageManager();
+    const packageManager = await detectPackageManager(targetDir);
     console.log(`Detected ${packageManager} as package manager.`);
     switch (packageManager) {
       case 'bun':
-        execSync('bun install --legacy-peer-deps', { stdio: 'inherit' });
+        execSync('bun install --legacy-peer-deps', { stdio: 'inherit', cwd: targetDir });
         break;
       case 'pnpm':
-        execSync('pnpm install --legacy-peer-deps', { stdio: 'inherit' });
+        execSync('pnpm install --legacy-peer-deps', { stdio: 'inherit', cwd: targetDir });
         break;
       case 'yarn':
-        execSync('yarn install --legacy-peer-deps', { stdio: 'inherit' });
+        execSync('yarn install --legacy-peer-deps', { stdio: 'inherit', cwd: targetDir });
         break;
       case 'npm':
       default:
-        execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
+        execSync('npm install --legacy-peer-deps', { stdio: 'inherit', cwd: targetDir });
         break;
     }
   } catch (error: unknown) {
-    console.error('Error updating package.json:', (error as Error).message);
+    console.error(`Error updating package.json in ${targetDir}:`, (error as Error).message);
+    process.exit(1);
   }
 }
 
-// Run the script
-updateToPreviousVersions().catch(console.error);
+// CLI entry point
+async function main() {
+  const args = process.argv.slice(2);
+  const targetDir = args[0] ? path.resolve(args[0]) : process.cwd();
+  await updateToPreviousVersions(targetDir);
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    console.error('CLI error:', error);
+    process.exit(1);
+  });
+}
+
+export { updateToPreviousVersions, getPreviousVersion, detectPackageManager };
