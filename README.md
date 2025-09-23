@@ -54,7 +54,7 @@ You can also use the main functions programmatically:
 
 I've had too many issues with newer major releases. An example that annoys me often is eslint's upgrade to Version 9 where they introduced new config layouts. None of the underlying plugins for ESlint were compatible for like 6 months, so I always had to downgrade.
 
-I personally don't think that a new major version for a software is anywhere viable until it hits x.1.1, e.g. `5.1.1` for typescript. The only time you shouldn't run this is when the latest version of the prior major release has a vulnerability.
+I personally don't think that a new major version for a software is anywhere viable until it hits `x.1.1`, e.g. `5.1.1` for typescript. The only time you shouldn't run this is when the latest version of the prior major release has a vulnerability.
 
 ## License
 
