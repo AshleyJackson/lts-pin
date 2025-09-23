@@ -39,5 +39,8 @@
     "prepublishOnly": "npm run build",
     "dev": "tsc --watch"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.5.2"
+  }
 }
