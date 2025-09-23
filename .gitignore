@@ -1,10 +1,10 @@
 # dependencies (bun install)
 node_modules
+testing/*
 testing/
 
 # output
 out
-dist
 *.tgz
 
 # code coverage
