@@ -60,4 +60,5 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # Ensure you have NPM_TOKEN secret set in repo settings
         run: |
+          npm adduser
           npm publish
