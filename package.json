@@ -4,20 +4,23 @@
   "author": {
     "name": "Ashley Jackson"
   },
-  "module": "index.ts",
-  "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build",
-    "dev": "tsc --watch"
-  },
   "main": "dist/index.js",
+  "module": "index.ts",
+  "dependencies": {
+    "@types/semver": "~6.2.7",
+    "axios": "~1.12.2",
+    "semver": "~6.3.1"
+  },
+  "peerDependencies": {
+    "typescript": "~4.9.5"
+  },
   "bin": {
     "lts-pin": "/dist/index.js"
   },
-  "devDependencies": {
-    "@types/bun": "~1.1.18"
-  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
   "keywords": [
     "lts",
     "pin",
@@ -31,16 +34,10 @@
     "yarn",
     "pnpm"
   ],
-  "peerDependencies": {
-    "typescript": "~4.9.5"
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "dev": "tsc --watch"
   },
-  "files": [
-    "dist/",
-    "README.md"
-  ],
-  "dependencies": {
-    "@types/semver": "~6.2.7",
-    "axios": "~1.12.2",
-    "semver": "~6.3.1"
-  }
+  "type": "module"
 }
