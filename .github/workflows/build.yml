@@ -58,6 +58,7 @@ jobs:
       - name: Build and Publish to NPM
         if: steps.check_tag.outputs.exists == 'false'
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }} # Ensure you have NPM_TOKEN secret set in repo settings
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # Ensure you have NPM_TOKEN secret set in repo settings
         run: |
+          npm adduser
           npm publish
