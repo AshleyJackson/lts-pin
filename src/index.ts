@@ -158,16 +158,13 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
 
 // CLI entry point
 async function main() {
+  console.log('Starting LTS Pinning Process...');
   const args = process.argv.slice(2);
   const targetDir = args[0] ? path.resolve(args[0]) : process.cwd();
   await updateToPreviousVersions(targetDir);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error('CLI error:', error);
-    process.exit(1);
-  });
-}
+console.log('Running as CLI');
+main()
 
 export { updateToPreviousVersions, getPreviousVersion, detectPackageManager };
