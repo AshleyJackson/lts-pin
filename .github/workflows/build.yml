@@ -55,6 +55,9 @@ jobs:
         run: |
           gh release create v${{ steps.get_version.outputs.version }} --generate-notes
 
+      - name: Configure .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+
       - name: Build and Publish to NPM
         if: steps.check_tag.outputs.exists == 'false'
         env:
