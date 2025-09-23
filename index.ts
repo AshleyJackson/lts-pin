@@ -9,8 +9,8 @@ interface PackageJson {
   devDependencies?: Record<string, string>;
 }
 
-// Function to get the previous minor version
-async function getPreviousMinorVersion(packageName: string) {
+// Function to get the previous major or minor version
+async function getPreviousVersion(packageName: string): Promise<string | null> {
   try {
     // Fetch package metadata from npm registry
     const response = await axios.get(`https://registry.npmjs.org/${packageName}`);
@@ -24,17 +24,29 @@ async function getPreviousMinorVersion(packageName: string) {
     }
 
     const latest: string = versions[0];
-    // Find the previous minor version
+    // First, try to find the previous major version
     for (let i = 1; i < versions.length; i++) {
       const current: string = versions[i];
-      // Check if current version is a previous minor version (same major, lower minor)
-      if (semver.major(current) === semver.major(latest) && semver.minor(current) < semver.minor(latest)) {
+      if (semver.major(current) < semver.major(latest)) {
+        console.log(`Found previous major version for ${packageName}: ${current}`);
         return current;
       }
     }
 
-    // Fallback: If no previous minor version exists, warn and use the latest
-    console.warn(`No previous minor version found for ${packageName}. Using latest: ${latest}`);
+    // If no previous major, try to find the previous minor version
+    for (let i = 1; i < versions.length; i++) {
+      const current: string = versions[i];
+      if (
+        semver.major(current) === semver.major(latest) &&
+        semver.minor(current) < semver.minor(latest)
+      ) {
+        console.log(`No previous major, using previous minor version for ${packageName}: ${current}`);
+        return current;
+      }
+    }
+
+    // Fallback: If no previous major or minor version exists, use the latest
+    console.warn(`No previous major or minor version found for ${packageName}. Using latest: ${latest}`);
     return latest;
   } catch (error: unknown) {
     console.error(`Error fetching versions for ${packageName}:`, (error as Error).message);
@@ -42,10 +54,10 @@ async function getPreviousMinorVersion(packageName: string) {
   }
 }
 
-// Function to update package.json with previous minor versions
-async function updateToPreviousMinorVersions(): Promise<void> {
+// Function to update package.json with previous major or minor versions
+async function updateToPreviousVersions(): Promise<void> {
   try {
-    // Read package.json
+    // Read package.json from ./testing/package.json
     const packageJson: PackageJson = JSON.parse(await fs.readFile('./testing/package.json', 'utf8'));
     const dependencies: Record<string, string> = packageJson.dependencies || {};
     const devDependencies: Record<string, string> = packageJson.devDependencies || {};
@@ -55,10 +67,10 @@ async function updateToPreviousMinorVersions(): Promise<void> {
 
     // Process each package
     for (const pkg of allPackages) {
-      const version: string | null = await getPreviousMinorVersion(pkg);
+      const version: string | null = await getPreviousVersion(pkg);
       if (version) {
         console.log(`Pinning ${pkg} to ~${version}`);
-        // Update dependencies or devDependencies with ~ to allow patch updates
+        // Update dependencies or devDependencies with ~ to allow minor and patch updates
         if (dependencies[pkg]) {
           dependencies[pkg] = `~${version}`;
         } else if (devDependencies[pkg]) {
@@ -69,15 +81,15 @@ async function updateToPreviousMinorVersions(): Promise<void> {
 
     // Write updated package.json
     await fs.writeFile('./testing/package.json', JSON.stringify(packageJson, null, 2));
-    console.log('Updated package.json');
+    console.log('Updated ./testing/package.json');
 
     // Update dependencies and regenerate package-lock.json
     console.log('Running npm install to update package-lock.json...');
-    execSync('npm install', { stdio: 'inherit' });
+    execSync('npm install --legacy-peer-deps', { stdio: 'inherit', cwd: './testing' });
   } catch (error: unknown) {
     console.error('Error updating package.json:', (error as Error).message);
   }
 }
 
 // Run the script
-updateToPreviousMinorVersions().catch(console.error);
+updateToPreviousVersions().catch(console.error);
