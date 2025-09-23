@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - master
-    # paths:
-    #   - "package.json" # Only trigger if package.json changes, assuming version bump
+    paths:
+      - "package.json" # Only trigger if package.json changes, assuming version bump
 
 jobs:
   release:
@@ -56,7 +56,7 @@ jobs:
           gh release create v${{ steps.get_version.outputs.version }} --generate-notes
 
       - name: Build and Publish to NPM
-        #if: steps.check_tag.outputs.exists == 'false'
+        if: steps.check_tag.outputs.exists == 'false'
         run: |
           npm config set //registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}
           npm publish
