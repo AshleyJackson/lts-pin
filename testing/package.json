@@ -1,0 +1,89 @@
+{
+  "name": "modules2",
+  "version": "0.1.0",
+  "bin": {
+    "modules2": "bin/modules2.js"
+  },
+  "scripts": {
+    "build": "pnpm envts && cdk deploy --require-approval never",
+    "watch": "tsc -w",
+    "lint": "pnpx eslint ./lib/",
+    "hotswap": "pnpm lint && cdk deploy --watch --hotswap --require-approval never",
+    "envts": "doppler secrets download --no-file --format env > .env && pnpx gen-env-types .env",
+    "cdk": "cdk",
+    "deploying": "pnpm envts && cdk deploy --watch",
+    "pr": "gh pr create -a @me -B v1 -H indev --fill-first && gh pr merge --auto -m",
+    "livedev": "ngrok http http://localhost:3000",
+    "home": "tsx --watch home.ts",
+    "test": "tsx ./test.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "24.3.0",
+    "aws-cdk": "2.1025.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-no-secrets": "^2.2.1",
+    "globals": "^16.3.0",
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.40.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-auto-scaling": "^3.864.0",
+    "@aws-sdk/client-ec2": "^3.868.0",
+    "@aws-sdk/client-rds": "^3.864.0",
+    "@aws-sdk/client-ses": "^3.864.0",
+    "@aws-sdk/client-ssm": "^3.864.0",
+    "@fastify/formbody": "^8.0.2",
+    "@libsql/client": "^0.15.12",
+    "@octokit/rest": "^22.0.0",
+    "@pagerduty/pdjs": "^2.2.4",
+    "@prisma/adapter-libsql": "^6.14.0",
+    "@sentry/serverless": "^7.120.4",
+    "@slack/types": "^2.15.0",
+    "@slack/web-api": "^7.9.3",
+    "@types/aws-lambda": "^8.10.152",
+    "@types/bun": "^1.2.20",
+    "@types/luxon": "^3.7.1",
+    "@types/luxon-business-days": "^3.0.0",
+    "aws-cdk-lib": "2.211.0",
+    "aws-lambda": "^1.0.7",
+    "axios": "^1.11.0",
+    "cloudflare": "^4.5.0",
+    "constructs": "^10.4.2",
+    "dotenv": "^17.2.1",
+    "fastify": "^5.5.0",
+    "get-root-path": "^3.0.1",
+    "kysely": "^0.28.5",
+    "luxon": "^3.7.1",
+    "luxon-business-days": "^3.0.1",
+    "mysql2": "^3.14.3",
+    "nanoid": "^5.1.5",
+    "octokit": "^5.0.3",
+    "prisma": "^6.14.0",
+    "prisma-kysely": "^1.8.0",
+    "slack-block-builder": "^2.8.0",
+    "tsx": "^4.20.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "aws-sdk",
+      "esbuild",
+      "prisma",
+      "unrs-resolver"
+    ]
+  },
+  "trustedDependencies": [
+    "@prisma/engines",
+    "@sentry/cli",
+    "aws-sdk",
+    "bun",
+    "esbuild",
+    "prisma",
+    "unrs-resolver"
+  ]
+}
