@@ -55,6 +55,38 @@ async function getPreviousVersion(packageName: string): Promise<string | null> {
   }
 }
 
+import fs from 'fs/promises';
+
+const packageManagers = [
+  'bun.lock',
+  'pnpm-lock.yaml',
+  'yarn.lock',
+  'package-lock.json',
+]
+
+async function detectPackageManager(): Promise<'bun' | 'pnpm' | 'yarn' | 'npm'> {
+  for (const manager of packageManagers) {
+    const path = `./${manager}`;
+    const exists = await fs.exists(path);
+
+    if (exists) {
+      switch (manager) {
+        case 'bun.lock':
+          return 'bun';
+        case 'pnpm-lock.yaml':
+          return 'pnpm';
+        case 'yarn.lock':
+          return 'yarn';
+        case 'package-lock.json':
+          return 'npm';
+        default:
+          return 'npm';
+      }
+    }
+  }
+  return 'npm'
+}
+
 // Function to update package.json with previous major or minor versions
 async function updateToPreviousVersions(): Promise<void> {
   try {
@@ -92,8 +124,30 @@ async function updateToPreviousVersions(): Promise<void> {
     console.log('Updated ./package.json');
 
     // Update dependencies and regenerate package-lock.json
-    console.log('Running npm install --legacy-peer-deps to update package-lock.json...');
-    execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
+    // Detect if Bun, pnpm, yarn, or npm is being used
+    const packageManager = await detectPackageManager();
+
+    switch (packageManager) {
+      case 'bun':
+        console.log('Detected Bun as package manager.');
+        execSync('bun install --legacy-peer-deps', { stdio: 'inherit' });
+        break;
+      case 'pnpm':
+        console.log('Detected pnpm as package manager.');
+        execSync('pnpm install --legacy-peer-deps', { stdio: 'inherit' });
+        break;
+      case 'yarn':
+        console.log('Detected yarn as package manager.');
+        execSync('yarn install --legacy-peer-deps', { stdio: 'inherit' });
+        break;
+      case 'npm':
+      default:
+        console.log('Defaulting to npm as package manager.');
+        execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
+        break;
+    }
+
+    // Default to npm
   } catch (error: unknown) {
     console.error('Error updating package.json:', (error as Error).message);
   }
