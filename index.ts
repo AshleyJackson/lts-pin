@@ -7,6 +7,7 @@ import { execSync } from 'child_process';
 interface PackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
 }
 
 // Function to get the previous major or minor version
@@ -57,35 +58,42 @@ async function getPreviousVersion(packageName: string): Promise<string | null> {
 // Function to update package.json with previous major or minor versions
 async function updateToPreviousVersions(): Promise<void> {
   try {
-    // Read package.json from ./testing/package.json
-    const packageJson: PackageJson = JSON.parse(await fs.readFile('./testing/package.json', 'utf8'));
+    // Read package.json from ./package.json
+    const packageJson: PackageJson = JSON.parse(await fs.readFile('./package.json', 'utf8'));
     const dependencies: Record<string, string> = packageJson.dependencies || {};
     const devDependencies: Record<string, string> = packageJson.devDependencies || {};
+    const peerDependencies: Record<string, string> = packageJson.peerDependencies || {};
 
     // Get all package names
-    const allPackages: string[] = [...Object.keys(dependencies), ...Object.keys(devDependencies)];
+    const allPackages: string[] = [
+      ...Object.keys(dependencies),
+      ...Object.keys(devDependencies),
+      ...Object.keys(peerDependencies),
+    ];
 
     // Process each package
     for (const pkg of allPackages) {
       const version: string | null = await getPreviousVersion(pkg);
       if (version) {
         console.log(`Pinning ${pkg} to ~${version}`);
-        // Update dependencies or devDependencies with ~ to allow minor and patch updates
+        // Update dependencies, devDependencies, or peerDependencies with ~ to allow minor and patch updates
         if (dependencies[pkg]) {
           dependencies[pkg] = `~${version}`;
         } else if (devDependencies[pkg]) {
           devDependencies[pkg] = `~${version}`;
+        } else if (peerDependencies[pkg]) {
+          peerDependencies[pkg] = `~${version}`;
         }
       }
     }
 
     // Write updated package.json
-    await fs.writeFile('./testing/package.json', JSON.stringify(packageJson, null, 2));
-    console.log('Updated ./testing/package.json');
+    await fs.writeFile('./package.json', JSON.stringify(packageJson, null, 2));
+    console.log('Updated ./package.json');
 
     // Update dependencies and regenerate package-lock.json
-    console.log('Running npm install to update package-lock.json...');
-    execSync('npm install --legacy-peer-deps', { stdio: 'inherit', cwd: './testing' });
+    console.log('Running npm install --legacy-peer-deps to update package-lock.json...');
+    execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
   } catch (error: unknown) {
     console.error('Error updating package.json:', (error as Error).message);
   }
