@@ -10,7 +10,7 @@ interface PackageJson {
 }
 
 // Function to get the previous minor version
-async function getPreviousMinorVersion(packageName: string): Promise<string | null> {
+async function getPreviousMinorVersion(packageName: string) {
   try {
     // Fetch package metadata from npm registry
     const response = await axios.get(`https://registry.npmjs.org/${packageName}`);
