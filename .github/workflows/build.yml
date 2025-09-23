@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - master
-    paths:
-      - "package.json" # Only trigger if package.json changes, assuming version bump
+    # paths:
+    #   - "package.json" # Only trigger if package.json changes, assuming version bump
 
 jobs:
   release:
