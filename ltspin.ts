@@ -29,6 +29,10 @@ async function getPreviousVersion(packageName: string): Promise<string | null> {
     for (let i = 1; i < versions.length; i++) {
       const current: string = versions[i];
       if (semver.major(current) < semver.major(latest)) {
+        if (semver.major(current) === 0) {
+          console.log(`Previous major version for ${packageName} is 0.x.x, using latest: ${latest}`);
+          return latest;
+        }
         console.log(`Found previous major version for ${packageName}: ${current}`);
         return current;
       }
@@ -55,21 +59,19 @@ async function getPreviousVersion(packageName: string): Promise<string | null> {
   }
 }
 
-import fs from 'fs/promises';
-
+// List of package manager lockfiles
 const packageManagers = [
   'bun.lock',
   'pnpm-lock.yaml',
   'yarn.lock',
   'package-lock.json',
-]
+];
 
+// Function to detect package manager
 async function detectPackageManager(): Promise<'bun' | 'pnpm' | 'yarn' | 'npm'> {
   for (const manager of packageManagers) {
-    const path = `./${manager}`;
-    const exists = await fs.exists(path);
-
-    if (exists) {
+    try {
+      await fs.access(`./${manager}`);
       switch (manager) {
         case 'bun.lock':
           return 'bun';
@@ -82,9 +84,11 @@ async function detectPackageManager(): Promise<'bun' | 'pnpm' | 'yarn' | 'npm'> 
         default:
           return 'npm';
       }
+    } catch {
+      // File doesn't exist, continue to next
     }
   }
-  return 'npm'
+  return 'npm';
 }
 
 // Function to update package.json with previous major or minor versions
@@ -123,31 +127,24 @@ async function updateToPreviousVersions(): Promise<void> {
     await fs.writeFile('./package.json', JSON.stringify(packageJson, null, 2));
     console.log('Updated ./package.json');
 
-    // Update dependencies and regenerate package-lock.json
-    // Detect if Bun, pnpm, yarn, or npm is being used
+    // Update dependencies and regenerate lockfile
     const packageManager = await detectPackageManager();
-
+    console.log(`Detected ${packageManager} as package manager.`);
     switch (packageManager) {
       case 'bun':
-        console.log('Detected Bun as package manager.');
         execSync('bun install --legacy-peer-deps', { stdio: 'inherit' });
         break;
       case 'pnpm':
-        console.log('Detected pnpm as package manager.');
         execSync('pnpm install --legacy-peer-deps', { stdio: 'inherit' });
         break;
       case 'yarn':
-        console.log('Detected yarn as package manager.');
         execSync('yarn install --legacy-peer-deps', { stdio: 'inherit' });
         break;
       case 'npm':
       default:
-        console.log('Defaulting to npm as package manager.');
         execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
         break;
     }
-
-    // Default to npm
   } catch (error: unknown) {
     console.error('Error updating package.json:', (error as Error).message);
   }
