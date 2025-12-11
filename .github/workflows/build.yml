@@ -62,5 +62,4 @@ jobs:
       - name: Build and Publish to NPM
         if: steps.check_tag.outputs.exists == 'false'
         run: |
-          npm config set //registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}
           npm publish
