@@ -12,54 +12,72 @@ interface PackageJson {
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
 }
+type VersionInfo = {
+  latest: string;
+  previous: string;
+};
 
-// Function to get the previous major or minor version
-async function getPreviousVersion(packageName: string): Promise<string | null> {
+const versionInfoCache = new Map<string, VersionInfo>();
+
+async function fetchVersionInfo(packageName: string): Promise<VersionInfo | null> {
+  if (versionInfoCache.has(packageName)) {
+    return versionInfoCache.get(packageName)!;
+  }
+
   try {
-    // Fetch package metadata from npm registry
     const response = await axios.get(`https://registry.npmjs.org/${packageName}`);
     const versions: string[] = Object.keys(response.data.versions)
-      .filter((v: string) => semver.valid(v) && !semver.prerelease(v)) // Exclude pre-releases
-      .sort(semver.rcompare); // Sort in descending order (latest first)
+      .filter((v: string) => semver.valid(v) && !semver.prerelease(v))
+      .sort(semver.rcompare);
 
-    if (versions.length < 2) {
-      console.warn(`Not enough stable versions for ${packageName}. Using latest: ${versions[0]}`);
-      return versions[0];
+    if (!versions.length) {
+      console.warn(`No stable versions found for ${packageName}.`);
+      return null;
     }
 
     const latest: string = versions[0];
-    // First, try to find the previous major version
-    for (let i = 1; i < versions.length; i++) {
-      const current: string = versions[i];
-      if (semver.major(current) < semver.major(latest)) {
-        if (semver.major(current) === 0) {
-          console.log(`Previous major version for ${packageName} is 0.x, using latest instead: ${latest}`);
-          return latest;
+    let previous: string = latest;
+
+    if (versions.length < 2) {
+      console.warn(`Not enough stable versions for ${packageName}. Using latest: ${latest}`);
+    } else {
+      for (let i = 1; i < versions.length; i++) {
+        const current: string = versions[i];
+        if (semver.major(current) < semver.major(latest)) {
+          if (semver.major(current) === 0) {
+            console.log(`Previous major version for ${packageName} is 0.x, using latest instead: ${latest}`);
+            previous = latest;
+          } else {
+            console.log(`Found previous major version for ${packageName}: ${current}`);
+            previous = current;
+          }
+          break;
         }
-        console.log(`Found previous major version for ${packageName}: ${current}`);
-        return current;
+      }
+
+      if (previous === latest) {
+        console.log(`No previous major version for ${packageName}. Using latest: ${latest}`);
       }
     }
 
-    // If no previous major, try to find the previous minor version
-    for (let i = 1; i < versions.length; i++) {
-      const current: string = versions[i];
-      if (
-        semver.major(current) === semver.major(latest) &&
-        semver.minor(current) < semver.minor(latest)
-      ) {
-        console.log(`No previous major, using previous minor version for ${packageName}: ${current}`);
-        return current;
-      }
-    }
-
-    // Fallback: If no previous major or minor version exists, use the latest
-    console.warn(`No previous major or minor version found for ${packageName}. Using latest: ${latest}`);
-    return latest;
+    const info: VersionInfo = { latest, previous };
+    versionInfoCache.set(packageName, info);
+    return info;
   } catch (error: unknown) {
     console.error(`Error fetching versions for ${packageName}:`, (error as Error).message);
     return null;
   }
+}
+
+// Function to get the previous major or minor version
+async function getPreviousVersion(packageName: string): Promise<string | null> {
+  const info = await fetchVersionInfo(packageName);
+  return info?.previous ?? null;
+}
+
+async function getLatestVersion(packageName: string): Promise<string | null> {
+  const info = await fetchVersionInfo(packageName);
+  return info?.latest ?? null;
 }
 
 // List of package manager lockfiles
@@ -69,6 +87,21 @@ const packageManagers = [
   'yarn.lock',
   'package-lock.json',
 ];
+
+// Allow Latest major versions for these packages
+const whitelistPackages = new Set([
+  "@o7/icon",
+  "svelte",
+  "@sveltejs/vite-plugin-svelte",
+  "@sveltejs/kit",
+  "tailwindcss",
+  "@tailwindcss/vite",
+  "ua-parser-js",
+  "kysely",
+  "kysely-neon",
+  "prisma-kysely",
+  "@neondatabase/serverless",
+])
 
 // Function to detect package manager
 async function detectPackageManager(dir: string): Promise<'bun' | 'pnpm' | 'yarn' | 'npm'> {
@@ -114,12 +147,15 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
 
     // Process each package
     for (const pkg of allPackages) {
-      const version: string | null = await getPreviousVersion(pkg);
+      const isWhitelisted = whitelistPackages.has(pkg);
+      const version: string | null = isWhitelisted
+        ? await getLatestVersion(pkg)
+        : await getPreviousVersion(pkg);
+
       if (version) {
-        const newPin = `<${semver.major(version) + 1}`;
-        console.log(`Pinning ${pkg} to ${newPin}`);
+        const newPin = isWhitelisted ? `>=${version}` : `<${semver.major(version) + 1}`;
+        console.log(`${isWhitelisted ? 'Pinning up' : 'Pinning down'} ${pkg} to ${newPin}`);
         if (dependencies[pkg]) {
-          // Ping to previous major version e.g. >2, <3
           dependencies[pkg] = newPin;
         } else if (devDependencies[pkg]) {
           devDependencies[pkg] = newPin;
