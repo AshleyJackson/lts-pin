@@ -33,7 +33,7 @@ async function getPreviousVersion(packageName: string): Promise<string | null> {
       const current: string = versions[i];
       if (semver.major(current) < semver.major(latest)) {
         if (semver.major(current) === 0) {
-          console.log(`Previous major version for ${packageName} is 0.x.x, using latest: ${latest}`);
+          console.log(`Previous major version for ${packageName} is 0.x, using latest instead: ${latest}`);
           return latest;
         }
         console.log(`Found previous major version for ${packageName}: ${current}`);
@@ -116,9 +116,9 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
     for (const pkg of allPackages) {
       const version: string | null = await getPreviousVersion(pkg);
       if (version) {
-        console.log(`Pinning ${pkg} to ~${version}`);
-        // Update dependencies, devDependencies, or peerDependencies with ~ to allow minor and patch updates
         const newPin = `>${semver.major(version)}, <${semver.major(version) + 1}`;
+        console.log(`Pinning ${pkg} to ${newPin}`);
+        // Update dependencies, devDependencies, or peerDependencies with ~ to allow minor and patch updates
         if (dependencies[pkg]) {
           // Ping to previous major version e.g. >2, <3
           dependencies[pkg] = newPin;
