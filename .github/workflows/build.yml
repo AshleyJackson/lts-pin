@@ -59,6 +59,10 @@ jobs:
         run: |
           gh release create v${{ steps.get_version.outputs.version }} --generate-notes
 
+      - name: Update npm
+        if: steps.check_tag.outputs.exists == 'false'
+        run: npm install -g npm@latest
+
       - name: Build and Publish to NPM
         if: steps.check_tag.outputs.exists == 'false'
         run: |
