@@ -1,6 +1,9 @@
 {
   "name": "lts-pin",
-  "version": "1.0.13",
+  "version": "1.0.14",
+  "repository": {
+    "url": "https://github.com/AshleyJackson/lts-pin"
+  },
   "author": {
     "name": "Ashley Jackson"
   },
