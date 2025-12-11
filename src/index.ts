@@ -101,6 +101,10 @@ const whitelistPackages = new Set([
   "kysely-neon",
   "prisma-kysely",
   "@neondatabase/serverless",
+  "@sveltejs/adapter-cloudflare",
+  "@sveltejs/adapter-netlify",
+  "@sveltejs/adapter-node",
+  "@sveltejs/adapter-vercel",
 ])
 
 // Function to detect package manager
