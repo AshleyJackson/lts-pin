@@ -116,9 +116,8 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
     for (const pkg of allPackages) {
       const version: string | null = await getPreviousVersion(pkg);
       if (version) {
-        const newPin = `>${semver.major(version)}, <${semver.major(version) + 1}`;
+        const newPin = `<${semver.major(version) + 1}`;
         console.log(`Pinning ${pkg} to ${newPin}`);
-        // Update dependencies, devDependencies, or peerDependencies with ~ to allow minor and patch updates
         if (dependencies[pkg]) {
           // Ping to previous major version e.g. >2, <3
           dependencies[pkg] = newPin;
