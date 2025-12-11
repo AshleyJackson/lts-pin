@@ -7,6 +7,10 @@ on:
     paths:
       - "package.json" # Only trigger if package.json changes, assuming version bump
 
+permissions:
+  id-token: write # Required for OIDC
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
