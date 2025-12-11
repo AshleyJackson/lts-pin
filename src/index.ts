@@ -206,7 +206,7 @@ async function main() {
   await updateToPreviousVersions(targetDir);
 }
 
-console.log('Running as CLI');
+console.log(`LTS Pinning Tool - Version ${require('../package.json').version}`);
 main()
 
 export { updateToPreviousVersions, getPreviousVersion, detectPackageManager };
