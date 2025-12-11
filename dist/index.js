@@ -100,14 +100,16 @@ async function updateToPreviousVersions(targetDir = process.cwd()) {
             if (version) {
                 console.log(`Pinning ${pkg} to ~${version}`);
                 // Update dependencies, devDependencies, or peerDependencies with ~ to allow minor and patch updates
+                const newPin = `>${semver.major(version)}, <${semver.major(version) + 1}`;
                 if (dependencies[pkg]) {
-                    dependencies[pkg] = `~${version}`;
+                    // Ping to previous major version e.g. >2, <3
+                    dependencies[pkg] = newPin;
                 }
                 else if (devDependencies[pkg]) {
-                    devDependencies[pkg] = `~${version}`;
+                    devDependencies[pkg] = newPin;
                 }
                 else if (peerDependencies[pkg]) {
-                    peerDependencies[pkg] = `~${version}`;
+                    peerDependencies[pkg] = newPin;
                 }
             }
         }

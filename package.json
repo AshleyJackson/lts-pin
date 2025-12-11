@@ -1,6 +1,6 @@
 {
   "name": "lts-pin",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": {
     "name": "Ashley Jackson"
   },
@@ -41,6 +41,6 @@
   },
   "type": "module",
   "devDependencies": {
-    "@types/node": "^24.5.2"
+    "@types/node": "^24.10.3"
   }
 }
