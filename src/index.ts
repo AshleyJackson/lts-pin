@@ -218,9 +218,7 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
       overridesChanged = true;
     }
 
-    if (!hasInitialOverrides && overridesChanged) {
-      packageJson.overrides = overridesBucket;
-    }
+    packageJson.overrides = overridesBucket;
 
     await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
     console.log(`Updated ${packageJsonPath}`);
