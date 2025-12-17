@@ -28,6 +28,14 @@ async function getTwoMinorDowngradedVersion(packageName: string): Promise<string
   const latestSemver = semver.parse(info.latest);
   if (!latestSemver) return null;
 
+  if (latestSemver.major === 0) {
+    const latestZeroMajor = info.orderedVersions.find((v) => {
+      const parsed = semver.parse(v);
+      return parsed && parsed.major === 0;
+    });
+    return latestZeroMajor ?? info.latest;
+  }
+
   for (const version of info.orderedVersions) {
     const parsed = semver.parse(version);
     if (!parsed) continue;
@@ -201,7 +209,7 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
     const directPackageSet = new Set(allPackages);
 
     for (const pkg of installedPackages) {
-      if (directPackageSet.has(pkg) || overridesBucket[pkg]) continue;
+      // if (directPackageSet.has(pkg) || overridesBucket[pkg]) continue;
 
       const isWhitelisted = whitelistPackages.has(pkg);
       const version: string | null = isWhitelisted
