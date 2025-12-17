@@ -139,6 +139,7 @@ const whitelistPackages = new Set([
   "esrap",
   "graceful-fs",
   "lru-cache",
+  "semver",
 ])
 
 // Function to detect package manager
