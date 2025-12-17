@@ -106,6 +106,7 @@ const whitelistPackages = new Set([
   "@sveltejs/adapter-node",
   "@sveltejs/adapter-vercel",
   "json-2-csv",
+  "ai",
 ])
 
 // Function to detect package manager
