@@ -108,6 +108,7 @@ const whitelistPackages = new Set([
   "@sveltejs/adapter-vercel",
   "json-2-csv",
   "ai",
+  "esrap",
 ])
 
 // Function to detect package manager
