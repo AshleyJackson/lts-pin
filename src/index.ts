@@ -16,9 +16,29 @@ interface PackageJson {
 type VersionInfo = {
   latest: string;
   previous: string;
+  orderedVersions: string[];
 };
 
 const versionInfoCache = new Map<string, VersionInfo>();
+
+async function getTwoMinorDowngradedVersion(packageName: string): Promise<string | null> {
+  const info = await fetchVersionInfo(packageName);
+  if (!info) return null;
+
+  const latestSemver = semver.parse(info.latest);
+  if (!latestSemver) return null;
+
+  for (const version of info.orderedVersions) {
+    const parsed = semver.parse(version);
+    if (!parsed) continue;
+
+    if (parsed.major === latestSemver.major && parsed.minor <= latestSemver.minor - 2) {
+      return version;
+    }
+  }
+
+  return info.previous ?? info.latest;
+}
 
 async function fetchVersionInfo(packageName: string): Promise<VersionInfo | null> {
   if (versionInfoCache.has(packageName)) {
@@ -61,7 +81,7 @@ async function fetchVersionInfo(packageName: string): Promise<VersionInfo | null
       }
     }
 
-    const info: VersionInfo = { latest, previous };
+    const info: VersionInfo = { latest, previous, orderedVersions: versions };
     versionInfoCache.set(packageName, info);
     return info;
   } catch (error: unknown) {
@@ -108,7 +128,7 @@ const whitelistPackages = new Set([
   "@sveltejs/adapter-vercel",
   "json-2-csv",
   "ai",
-  "esrap",
+  "esrap"
 ])
 
 // Function to detect package manager
@@ -188,11 +208,11 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
       const isWhitelisted = whitelistPackages.has(pkg);
       const version: string | null = isWhitelisted
         ? await getLatestVersion(pkg)
-        : await getPreviousVersion(pkg);
+        : await getTwoMinorDowngradedVersion(pkg);
 
       if (!version) continue;
 
-      const newPin = isWhitelisted ? `>=${version}` : `<${semver.major(version) + 1}`;
+      const newPin = isWhitelisted ? `>=${version}` : version;
       console.log(`Pinning transitive ${pkg} (overrides) to ${newPin}`);
       overridesBucket[pkg] = newPin;
       overridesChanged = true;
