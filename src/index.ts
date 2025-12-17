@@ -198,8 +198,6 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
 
     const installedPackages = await collectInstalledPackages(targetDir);
     const overridesBucket = packageJson.overrides ?? {};
-    const hasInitialOverrides = Boolean(packageJson.overrides);
-    let overridesChanged = false;
     const directPackageSet = new Set(allPackages);
 
     for (const pkg of installedPackages) {
@@ -215,7 +213,6 @@ async function updateToPreviousVersions(targetDir: string = process.cwd()): Prom
       const newPin = isWhitelisted ? `>=${version}` : version;
       console.log(`Pinning transitive ${pkg} (overrides) to ${newPin}`);
       overridesBucket[pkg] = newPin;
-      overridesChanged = true;
     }
 
     packageJson.overrides = overridesBucket;
