@@ -26,24 +26,48 @@ async function fetchVersionInfo(packageName: string): Promise<VersionInfo | null
 
   try {
     const response = await axios.get(`https://registry.npmjs.org/${packageName}`);
-    const versions: string[] = Object.keys(response.data.versions)
-      .filter((v: string) => semver.valid(v) && !semver.prerelease(v))
-      .sort(semver.rcompare);
+    const timeMap: Record<string, string> = response.data.time || {};
+    const allVersions: string[] = Object.keys(response.data.versions)
+      .filter((v: string) => semver.valid(v) && !semver.prerelease(v));
 
-    if (!versions.length) {
+    // sort versions descending
+    const stableVersions: string[] = allVersions.sort(semver.rcompare);
+
+    if (!stableVersions.length) {
       console.warn(`No stable versions found for ${packageName}.`);
       return null;
     }
 
-    const latest: string = versions[0];
+    // Require "latest" to be at least 30 days old
+    const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - MONTH_MS;
+    const stableAndOld = stableVersions.filter(v => {
+      const t = timeMap[v];
+      if (!t) return false;
+      return new Date(t).getTime() <= cutoff;
+    });
+
+    const latest: string = stableAndOld.length ? stableAndOld[0] : stableVersions[0];
+    if (!stableAndOld.length) {
+      console.warn(`No stable versions >=30 days old for ${packageName}. Falling back to latest: ${latest}`);
+    }
+
     let previous: string = latest;
 
-    if (versions.length < 2) {
+    if (stableVersions.length < 2) {
       console.warn(`Not enough stable versions for ${packageName}. Using latest: ${latest}`);
     } else {
-      for (let i = 1; i < versions.length; i++) {
-        const current: string = versions[i];
+      // Find a previous major version that is also >=30 days old (prefer older ones)
+      for (let i = 1; i < stableVersions.length; i++) {
+        const current: string = stableVersions[i];
         if (semver.major(current) < semver.major(latest)) {
+          const t = timeMap[current];
+          const isOld = t ? new Date(t).getTime() <= cutoff : false;
+          if (!isOld) {
+            console.log(`Skipping previous major ${current} for ${packageName} because it is newer than 30 days.`);
+            continue;
+          }
+
           if (semver.major(current) === 0) {
             console.log(`Previous major version for ${packageName} is 0.x, using latest instead: ${latest}`);
             previous = latest;
@@ -56,7 +80,7 @@ async function fetchVersionInfo(packageName: string): Promise<VersionInfo | null
       }
 
       if (previous === latest) {
-        console.log(`No previous major version for ${packageName}. Using latest: ${latest}`);
+        console.log(`No previous major version (>=30 days) for ${packageName}. Using latest: ${latest}`);
       }
     }
 
