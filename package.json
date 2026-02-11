@@ -11,7 +11,7 @@
   "module": "index.ts",
   "dependencies": {
     "@types/semver": "~6.2.7",
-    "axios": "~1.12.2",
+    "axios": "~1.13.5",
     "semver": "~6.3.1"
   },
   "peerDependencies": {
